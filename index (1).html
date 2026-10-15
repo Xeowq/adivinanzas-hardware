@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>¿Quién soy? — Adivinanzas de hardware</title>
+<style>
+:root { color-scheme: light dark; --bg: light-dark(#f4f7fb,#101827); --panel: light-dark(#ffffff,#1b2638); --ink: light-dark(#172238,#edf3ff); --muted: light-dark(#5d6b82,#b0bfd4); --line: light-dark(#dce4ef,#34445d); --accent: light-dark(#6558df,#a69cff); --accent2: light-dark(#dff8f1,#17483f); --good: light-dark(#176b4d,#8be0bb); --bad: light-dark(#a23d4d,#ff9aa8); }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
+#app { min-height: 100vh; background-color: var(--bg); padding: 30px 18px 42px; }
+.wrap { max-width: 850px; margin: 0 auto; }
+header { padding: 14px 0 24px; }
+.eyebrow { font-size: .78rem; letter-spacing: .15em; text-transform: uppercase; color: var(--accent); font-weight: 800; }
+h1 { font-size: clamp(2rem,5vw,3.5rem); line-height: 1.04; letter-spacing: -.045em; margin: 10px 0 12px; }
+.subtitle { color: var(--muted); font-size: 1.04rem; line-height: 1.6; max-width: 650px; }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.pill { border: 1px solid var(--line); padding: 7px 11px; border-radius: 999px; font-size: .82rem; color: var(--muted); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; padding: clamp(20px,4vw,34px); box-shadow: 0 14px 40px #0000000a; }
+.topline { display:flex; justify-content:space-between; gap:12px; align-items:center; color:var(--muted); font-size:.9rem; }
+.track { height: 7px; background: var(--line); border-radius: 99px; overflow:hidden; margin: 15px 0 28px; }
+#bar { height:100%; width:0; background:var(--accent); transition:width .25s ease; }
+.category { display:inline-block; background:var(--accent2); color:var(--accent); font-size:.78rem; font-weight:800; padding:7px 10px; border-radius:8px; margin-bottom:14px; }
+#riddle { font-size:clamp(1.35rem,3vw,1.85rem); line-height:1.45; margin:0 0 23px; font-weight:750; }
+.answers { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+.answer { background:transparent; border:1px solid var(--line); border-radius:13px; color:var(--ink); padding:15px; font:inherit; font-weight:650; text-align:left; cursor:pointer; transition:border-color .15s, transform .15s, background .15s; }
+.answer:hover:not(:disabled) { border-color:var(--accent); transform:translateY(-1px); }
+.answer:focus-visible, button:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+.answer.correct { border-color:var(--good); background:light-dark(#e8f8f0,#18382f); }
+.answer.wrong { border-color:var(--bad); background:light-dark(#fff0f1,#44242c); }
+.answer:disabled { cursor:default; }
+#feedback { margin-top:18px; padding:14px 16px; border-radius:12px; background:var(--bg); color:var(--muted); line-height:1.55; min-height:52px; }
+#feedback strong { color:var(--ink); }
+.actions { display:flex; justify-content:space-between; gap:12px; margin-top:20px; align-items:center; }
+button.primary { background:var(--accent); color:white; border:0; border-radius:12px; padding:13px 18px; font:inherit; font-weight:800; cursor:pointer; }
+button.secondary { background:transparent; border:1px solid var(--line); border-radius:12px; padding:12px 15px; color:var(--ink); font:inherit; cursor:pointer; }
+button:disabled { opacity:.4; cursor:not-allowed; }
+#result { display:none; text-align:center; }
+.score { font-size:4rem; letter-spacing:-.06em; font-weight:900; margin:10px 0; color:var(--accent); }
+.result-note { color:var(--muted); line-height:1.6; max-width:560px; margin:0 auto 22px; }
+@media(max-width:560px) { #app{padding:20px 12px 30px;} .answers{grid-template-columns:1fr;} .actions{align-items:stretch;} .actions button{flex:1;} }
+</style>
+</head>
+<body>
+<div id="app"><main class="wrap">
+<header>
+<div class="eyebrow">Mini juego · Arquitectura de computadoras</div>
+<h1>¿Quién soy?<br>Hardware enigma</h1>
+<p class="subtitle">Lee cada pista y adivina el puerto de entrada/salida o el tipo de pantalla descrito. ¡Diez acertijos para poner a prueba tus conocimientos!</p>
+<div class="pills"><span class="pill">10 preguntas</span><span class="pill">Opción múltiple</span><span class="pill">Puntuación al final</span></div>
+</header>
+<section class="panel" id="quiz" aria-live="polite">
+<div class="topline"><span id="counter">Pregunta 1 de 10</span><span id="points">Puntos: 0</span></div>
+<div class="track"><div id="bar"></div></div>
+<div class="category" id="category">Puertos de entrada/salida</div>
+<h2 id="riddle">Cargando acertijo…</h2>
+<div class="answers" id="answers"></div>
+<div id="feedback" role="status">Selecciona la respuesta que creas correcta.</div>
+<div class="actions"><button class="secondary" id="restartTop">Reiniciar</button><button class="primary" id="next" disabled>Siguiente →</button></div>
+</section>
+<section class="panel" id="result">
+<div class="eyebrow">Reto terminado</div><h2>¡Adivinanzas completadas!</h2><div class="score" id="finalScore">0/10</div><p class="result-note" id="resultText"></p><button class="primary" id="playAgain">Jugar otra vez ↻</button>
+</section>
+</main></div>
+<script>
+const questions = [
+{cat:'Puertos de entrada/salida',q:'Soy pequeño, reversible y conecto celulares, memorias y muchos periféricos. Puedo transportar datos y energía; según la versión, también video. ¿Quién soy?',a:['USB tipo C','VGA','PS/2','Puerto paralelo'],ok:0,why:'USB-C describe el conector físico reversible. Las funciones y velocidades disponibles dependen del dispositivo y del estándar que implemente.'},
+{cat:'Puertos de entrada/salida',q:'Tengo un conector tradicional azul con 15 contactos y envío la imagen como señal analógica. Fui muy común en monitores antiguos. ¿Quién soy?',a:['HDMI','VGA','Ethernet','USB-A'],ok:1,why:'VGA transmite video analógico y fue común en computadoras y monitores; hoy suelen preferirse interfaces digitales.'},
+{cat:'Puertos de entrada/salida',q:'Llevo imagen y sonido digital por un mismo cable hacia una televisión o monitor. Soy habitual en consolas, televisores y computadoras. ¿Quién soy?',a:['PS/2','Serial RS-232','HDMI','Jack de audio'],ok:2,why:'HDMI transporta audio y video digitales por una sola conexión, además de admitir funciones adicionales según la versión.'},
+{cat:'Puertos de entrada/salida',q:'Mi nombre recuerda a un punto de control de una red. Conecto la computadora al router mediante un cable con conector parecido a una pestaña. ¿Quién soy?',a:['RJ-45 / Ethernet','DisplayPort','USB-B','VGA'],ok:0,why:'El puerto Ethernet suele usar un conector 8P8C, comúnmente llamado RJ-45, para conectar equipos a redes cableadas.'},
+{cat:'Puertos de entrada/salida',q:'Soy una interfaz digital de video muy usada en monitores de computadora; puedo admitir altas resoluciones y frecuencias de actualización. ¿Quién soy?',a:['PS/2','DisplayPort','Puerto paralelo','Entrada de micrófono'],ok:1,why:'DisplayPort es una interfaz digital orientada a conectar fuentes de video con pantallas, con capacidades que varían por versión.'},
+{cat:'Dispositivos de visualización',q:'No emito luz por mí misma en su forma tradicional: modulo la luz de una retroiluminación usando cristales líquidos. ¿Qué pantalla soy?',a:['CRT','LCD','OLED','Plasma'],ok:1,why:'LCD significa pantalla de cristal líquido. Las LCD tradicionales requieren una fuente de luz posterior para que la imagen sea visible.'},
+{cat:'Dispositivos de visualización',q:'Mis diminutos diodos emiten luz cuando circula corriente. Puedo formar indicadores, letreros y pantallas brillantes. ¿Qué tecnología soy?',a:['LED','LCD pasiva','VGA','E-ink'],ok:0,why:'LED significa diodo emisor de luz. Los LED se usan como indicadores y en pantallas; además, muchas pantallas comercializadas como “LED” son LCD con retroiluminación LED.'},
+{cat:'Dispositivos de visualización',q:'Cada píxel de mi pantalla puede producir su propia luz orgánica, así que puedo apagar píxeles individuales y lograr negros profundos. ¿Qué tecnología soy?',a:['OLED','LCD con CCFL','CRT','Proyector DLP'],ok:0,why:'En OLED cada píxel emite luz de forma individual, lo que permite negros muy profundos cuando los píxeles se apagan.'},
+{cat:'Dispositivos de visualización',q:'Antes de las pantallas planas, usaba un tubo grande y pesado y un haz de electrones para iluminar fósforo en la pantalla. ¿Qué tipo soy?',a:['LCD','OLED','CRT','MicroLED'],ok:2,why:'CRT significa tubo de rayos catódicos. Fue una tecnología común en televisores y monitores antes de la adopción masiva de pantallas planas.'},
+{cat:'Dispositivos de visualización',q:'Consumo poca energía y puedo mantener texto visible sin refrescar constantemente la imagen. Soy común en lectores electrónicos y me parezco al papel. ¿Qué pantalla soy?',a:['E-ink o tinta electrónica','OLED de alta frecuencia','CRT','Pantalla LED de matriz tradicional'],ok:0,why:'La tinta electrónica refleja la luz ambiental y suele consumir energía sobre todo al cambiar la imagen, por eso es popular en lectores electrónicos.'}
+];
+let order=[], index=0, score=0, locked=false;
+const $=id=>document.getElementById(id);
+function shuffle(arr){const x=[...arr];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}return x;}
+function start(){order=shuffle(questions.map((_,i)=>i));index=0;score=0;locked=false;$('quiz').style.display='block';$('result').style.display='none';render();}
+function render(){locked=false;const q=questions[order[index]];$('counter').textContent=`Pregunta ${index+1} de ${questions.length}`;$('points').textContent=`Puntos: ${score}`;$('bar').style.width=`${index/questions.length*100}%`;$('category').textContent=q.cat;$('riddle').textContent=q.q;$('feedback').textContent='Selecciona la respuesta que creas correcta.';$('next').disabled=true;$('next').textContent=index===questions.length-1?'Ver resultado':'Siguiente →';$('answers').innerHTML='';q.a.forEach((answer,i)=>{const b=document.createElement('button');b.className='answer';b.textContent=String.fromCharCode(65+i)+'. '+answer;b.addEventListener('click',()=>choose(i));$('answers').appendChild(b);});}
+function choose(choice){if(locked)return;locked=true;const q=questions[order[index]];const buttons=[...$('answers').children];buttons.forEach((b,i)=>{b.disabled=true;if(i===q.ok)b.classList.add('correct');if(i===choice&&i!==q.ok)b.classList.add('wrong');});if(choice===q.ok){score++;$('feedback').innerHTML='<strong>¡Correcto!</strong> '+q.why;}else{$('feedback').innerHTML='<strong>No exactamente.</strong> La respuesta correcta es <strong>'+q.a[q.ok]+'</strong>. '+q.why;}$('points').textContent=`Puntos: ${score}`;$('bar').style.width=`${(index+1)/questions.length*100}%`;$('next').disabled=false;}
+function next(){if(!locked)return;if(index<questions.length-1){index++;render();}else finish();}
+function finish(){$('quiz').style.display='none';$('result').style.display='block';$('finalScore').textContent=`${score}/${questions.length}`;let msg=score===10?'¡Excelente! Dominas los conceptos principales de puertos y pantallas.':score>=7?'¡Muy bien! Tienes una buena base; revisa las explicaciones para afinar los detalles.':score>=4?'Buen intento. Repasa las pistas y la bibliografía para reforzar los conceptos.':'¡Toda gran persona experta empieza por algún lado! Lee las explicaciones y vuelve a intentarlo.';$('resultText').textContent=msg+' Acertaste '+score+' de '+questions.length+' preguntas.';}
+$('next').addEventListener('click',next);$('restartTop').addEventListener('click',start);$('playAgain').addEventListener('click',start);start();
+</script>
+</body>
+</html>
